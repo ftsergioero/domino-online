@@ -1,0 +1,58 @@
+# Todo:              docker compose up -d --build   → web en http://localhost:3000
+# Solo Redis/MySQL:  docker compose up -d redis mysql  (y npm run dev:* en local)
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: domino
+      MYSQL_USER: domino
+      MYSQL_PASSWORD: domino
+    ports: ["3306:3306"]
+    volumes: [mysql-data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      retries: 30
+
+  server:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      PORT: 4000
+      CORS_ORIGIN: http://localhost:3000
+      HAND_PAUSE_MS: 4000
+      REDIS_URL: redis://redis:6379
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: domino
+      DB_PASSWORD: domino
+      DB_NAME: domino
+    ports: ["4000:4000"]
+    depends_on:
+      redis: { condition: service_healthy }
+      mysql: { condition: service_healthy }
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # Dirección del backend tal y como la ve el navegador.
+        NEXT_PUBLIC_SERVER_URL: http://localhost:4000
+    ports: ["3000:3000"]
+    depends_on: [server]
+    restart: unless-stopped
+
+volumes:
+  mysql-data:

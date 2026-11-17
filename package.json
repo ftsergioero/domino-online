@@ -1,0 +1,14 @@
+{
+  "name": "domino-online",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:server": "npm run start:dev -w backend",
+    "dev:web": "npm run dev -w frontend",
+    "test": "npm test -w backend",
+    "build": "npm run build -w backend && npm run build -w frontend"
+  }
+}
