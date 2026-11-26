@@ -1,0 +1,11 @@
+services:
+  backend:
+    build: ./backend
+    container_name: domino-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      # Orígenes permitidos (separados por comas). Vacío = cualquiera.
+      - CORS_ORIGIN=${CORS_ORIGIN:-}
+    restart: unless-stopped
