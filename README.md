@@ -64,3 +64,23 @@ npm test
 
 Incluyen pruebas de las reglas, una simulación de cientos de partidas completas y una partida de 4 jugadores
 a través de Socket.IO.
+
+## Backend con Docker
+
+```bash
+docker compose up -d --build
+```
+
+Levanta el backend en el puerto 3001 (comprueba con `curl http://localhost:3001/health`).
+
+## Frontend en Vercel + backend en tu PC
+
+1. Despliega `frontend/` en Vercel (Root Directory: `frontend`).
+2. En tu PC, levanta el backend (`docker compose up -d --build`).
+3. Exponlo a internet con HTTPS mediante un túnel, por ejemplo Cloudflare Tunnel:
+   `cloudflared tunnel --url http://localhost:3001` (te dará una dirección `https://xxxx.trycloudflare.com`).
+4. Abre la web de Vercel, despliega «Servidor del juego», pega esa dirección y pulsa «Guardar y conectar».
+5. Crea la sala y comparte el enlace de invitación: ya incluye la dirección del servidor.
+
+La página de Vercel es HTTPS, así que el backend también debe serlo (por eso el túnel); una dirección
+`http://` con tu IP no funcionará desde la web publicada.

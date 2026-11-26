@@ -642,3 +642,7 @@ button.domino {
 .score.t2 {
   border-left-color: #9b6ad6;
 }
+.warn code,
+.rules code {
+  word-break: break-all;
+}

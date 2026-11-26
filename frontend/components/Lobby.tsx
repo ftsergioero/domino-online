@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { RoomView } from '@/lib/types';
+import { serverUrl } from '@/lib/useGame';
 
 export function Lobby({
   room,
@@ -18,7 +19,11 @@ export function Lobby({
   const isHost = room.hostId === room.you;
   const n = room.players.length;
 
-  const link = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?sala=${room.code}` : '';
+  // El enlace de invitación lleva también la dirección del servidor, así tus amigos no tienen que configurarla.
+  const link =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}${window.location.pathname}?sala=${room.code}&servidor=${encodeURIComponent(serverUrl())}`
+      : '';
 
   const copy = async () => {
     try {

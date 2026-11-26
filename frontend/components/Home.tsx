@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { savedName } from '@/lib/useGame';
+import { savedName, serverUrl, setServerUrl } from '@/lib/useGame';
 import type { Ack } from '@/lib/types';
 import { Domino } from './Domino';
 
@@ -18,9 +18,13 @@ export function Home({
   const [code, setCode] = useState('');
   const [target, setTarget] = useState(100);
   const [busy, setBusy] = useState(false);
+  const [server, setServer] = useState('');
+  const [currentServer, setCurrentServer] = useState('');
 
   useEffect(() => {
     setName(savedName());
+    setCurrentServer(serverUrl());
+    setServer(serverUrl());
     const sala = new URLSearchParams(window.location.search).get('sala');
     if (sala) setCode(sala.toUpperCase());
   }, []);
@@ -103,8 +107,33 @@ export function Home({
             </button>
           </div>
         </div>
-        {!connected && <p className="warn">Conectando con el servidor…</p>}
+        {!connected && (
+          <p className="warn">
+            Conectando con el servidor <code>{currentServer}</code>… Si no conecta, revisa la dirección en
+            «Servidor del juego».
+          </p>
+        )}
       </section>
+
+      <details className="card rules">
+        <summary>Servidor del juego {connected ? '🟢' : '🔴'}</summary>
+        <p className="muted small">
+          Dirección del backend al que se conecta esta página. Si el servidor corre en tu PC y lo compartes con un
+          túnel (por ejemplo, Cloudflare Tunnel), pega aquí la dirección https que te dé.
+        </p>
+        <label className="field">
+          <span>Dirección</span>
+          <input value={server} placeholder="https://xxxx.trycloudflare.com" onChange={(e) => setServer(e.target.value)} />
+        </label>
+        <div className="row">
+          <button className="btn small" onClick={() => setServerUrl('')}>
+            Usar el predeterminado
+          </button>
+          <button className="btn small primary" disabled={!server.trim()} onClick={() => setServerUrl(server)}>
+            Guardar y conectar
+          </button>
+        </div>
+      </details>
 
       <details className="card rules">
         <summary>Reglas</summary>

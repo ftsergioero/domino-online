@@ -12,9 +12,57 @@ interface Session {
   name: string;
 }
 
-function serverUrl() {
+const SERVER_KEY = 'domino-server';
+
+function defaultServerUrl() {
   if (process.env.NEXT_PUBLIC_SERVER_URL) return process.env.NEXT_PUBLIC_SERVER_URL;
   return `${window.location.protocol}//${window.location.hostname}:3001`;
+}
+
+function normalizeServer(url: string) {
+  const u = url.trim().replace(/\/+$/, '');
+  if (!u) return '';
+  return /^https?:\/\//i.test(u) ? u : `https://${u}`;
+}
+
+/**
+ * Dirección del backend. Orden: parámetro `?servidor=` del enlace, la guardada en este navegador,
+ * la variable NEXT_PUBLIC_SERVER_URL y, por último, el mismo host en el puerto 3001.
+ */
+export function serverUrl(): string {
+  const fromLink = new URLSearchParams(window.location.search).get('servidor');
+  if (fromLink) {
+    const u = normalizeServer(fromLink);
+    try {
+      localStorage.setItem(SERVER_KEY, u);
+    } catch {
+      /* nada */
+    }
+    return u;
+  }
+  try {
+    const saved = localStorage.getItem(SERVER_KEY);
+    if (saved) return saved;
+  } catch {
+    /* nada */
+  }
+  return defaultServerUrl();
+}
+
+/** Cambia el servidor (vacío = el predeterminado) y recarga la página. */
+export function setServerUrl(url: string) {
+  const u = normalizeServer(url);
+  try {
+    if (u) localStorage.setItem(SERVER_KEY, u);
+    else localStorage.removeItem(SERVER_KEY);
+    localStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* nada */
+  }
+  const link = new URL(window.location.href);
+  link.searchParams.delete('servidor');
+  link.searchParams.delete('sala');
+  window.location.href = link.toString();
 }
 
 function loadSession(): Session | null {
