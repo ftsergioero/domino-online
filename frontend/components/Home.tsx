@@ -41,7 +41,7 @@ export function Home({
     <main className="home">
       <div className="hero">
         <div className="hero-tiles" aria-hidden>
-          <Domino a={6} b={6} size="lg" />
+          <Domino a={9} b={9} size="lg" />
           <Domino a={5} b={3} size="lg" />
           <Domino a={1} b={4} size="lg" />
         </div>
@@ -138,13 +138,20 @@ export function Home({
       <details className="card rules">
         <summary>Reglas</summary>
         <ul>
-          <li>Se juega con las 28 fichas del doble seis; cada jugador recibe 7.</li>
-          <li>Con 4 jugadores se juega por parejas (los compañeros se sientan enfrente) y no hay pozo.</li>
+          <li>Se juega con las 55 fichas del doble nueve; cada jugador recibe 10.</li>
+          <li>Con 4 jugadores se juega por parejas (los compañeros se sientan enfrente) y no hay pozo: las 15 fichas sobrantes quedan fuera.</li>
           <li>Con 2 o 3 jugadores las fichas sobrantes forman el pozo: si no puedes jugar, robas.</li>
-          <li>La primera mano la abre quien tenga el doble más alto. Las siguientes, el ganador de la anterior.</li>
+          <li>
+            Antes de empezar se sortea la salida: todas las fichas boca abajo y un jugador de cada pareja levanta
+            una. Sale la pareja de la ficha más alta.
+          </li>
+          <li>
+            La pareja que sale discute la salida: uno pide salir y su compañero tiene que dejarle. Si no se
+            ponen de acuerdo, nadie sale. En las siguientes manos sale la pareja que ganó la anterior.
+          </li>
           <li>Si no puedes jugar ni robar, pasas automáticamente.</li>
           <li>Quien se queda sin fichas gana la mano y su bando suma los puntos de todas las fichas que quedan.</li>
-          <li>Si el juego se cierra (tranque), gana el bando con menos puntos en la mano.</li>
+          <li>Si el juego se cierra (tranque), gana el jugador con menos puntos en la mano en ese momento.</li>
         </ul>
       </details>
     </main>

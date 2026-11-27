@@ -476,9 +476,112 @@ button.domino {
 .board-empty {
   color: #d8ebe1;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+/* ---------- sorteo de la salida ---------- */
+.pick-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
+  padding: 18px 14px 28px;
+  color: #eaf5ef;
+  background: radial-gradient(ellipse at center, var(--felt) 0%, var(--felt-dark) 100%);
+  text-align: center;
+}
+.pick-area h2 {
+  margin: 0;
+}
+.pick-area .muted {
+  color: #b9d4c8;
+  margin: 0;
+}
+.pick-status {
+  margin: 0;
   font-size: 1.05rem;
+}
+.pick-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 760px;
+}
+.pick-slot {
+  display: inline-flex;
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 6px;
+}
+button.pick-slot {
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+button.pick-slot:hover,
+button.pick-slot:focus-visible {
+  transform: translateY(-4px) scale(1.08);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.pick-slot.taken {
+  opacity: 0.9;
+}
+.pick-chosen {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.pick-chosen-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+.pick-chosen-item.win {
+  background: rgba(242, 179, 61, 0.25);
+  outline: 2px solid var(--accent);
+}
+.pick-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- discutir la salida ---------- */
+.agree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+}
+.agree .muted {
+  color: #b9d4c8;
+}
+.agree.mine {
+  background: rgba(0, 0, 0, 0.3);
+  outline: 2px solid var(--accent);
+}
+.agree.ask {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.agree-note {
+  color: #ffb4a8;
+  font-size: 0.95rem;
 }
 .end-btn {
   background: var(--accent);
@@ -529,6 +632,33 @@ button.domino {
   justify-content: center;
   flex-wrap: wrap;
   padding: 18px 0 8px;
+}
+.hand-slot {
+  touch-action: none; /* para poder arrastrar con el dedo */
+  user-select: none;
+  cursor: grab;
+  border-radius: 8px;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.hand-slot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.hand-slot.dragging {
+  cursor: grabbing;
+  opacity: 0.6;
+  transform: scale(1.08);
+}
+.hand-slot .domino {
+  pointer-events: none;
+}
+.hand-tools {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
 }
 .log {
   list-style: none;
@@ -645,4 +775,577 @@ button.domino {
 .warn code,
 .rules code {
   word-break: break-all;
+}
+
+/* ---------- cartel de fin de mano (se pegó / se trancó) ---------- */
+.round-announce-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 16px;
+  animation: ra-fade 3s ease forwards;
+}
+.round-announce {
+  text-align: center;
+  padding: 26px 34px;
+  border-radius: 18px;
+  border: 4px solid #fff;
+  color: #fff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  max-width: 640px;
+  animation: ra-pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.round-announce.domino {
+  background: linear-gradient(135deg, #1f8a4c, #0f5a3f);
+}
+.round-announce.tranque {
+  background: linear-gradient(135deg, #b3261e, #6d1712);
+}
+.ra-title {
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  font-weight: 900;
+  line-height: 1.1;
+}
+.ra-detail {
+  margin-top: 10px;
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+@keyframes ra-pop {
+  0% { transform: scale(0.4) rotate(-6deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes ra-fade {
+  0%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------- cartel de «se pasó» ---------- */
+.pass-alerts {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 30;
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100% - 32px);
+}
+.pass-alert {
+  background: #1d1d1d;
+  color: #ffd54a;
+  border: 3px solid #ffd54a;
+  padding: 14px 26px;
+  border-radius: 14px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  animation: pass-pop 3.5s ease forwards;
+}
+.pass-alert b {
+  color: #fff;
+}
+@keyframes pass-pop {
+  0% { opacity: 0; transform: scale(0.6) rotate(-4deg); }
+  10% { opacity: 1; transform: scale(1.08) rotate(2deg); }
+  18% { transform: scale(1) rotate(0); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* =====================================================================
+   Diseño de la mesa a pantalla completa (móvil primero).
+   La mesa ocupa exactamente la pantalla: cabecera arriba, mano abajo y
+   el tablero en medio con scroll propio. Nada se sale ni se corta.
+   ===================================================================== */
+.table-wrap {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.scorebar {
+  flex: none;
+  flex-wrap: nowrap;
+  padding: 6px 10px;
+  padding-top: max(6px, env(safe-area-inset-top));
+  gap: 8px;
+}
+.scores {
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+}
+.score {
+  padding: 3px 8px;
+  gap: 6px;
+  min-width: 0;
+}
+.score .sname {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 34vw;
+}
+.meta {
+  gap: 8px;
+  flex: none;
+  white-space: nowrap;
+}
+
+.felt {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+.board-area {
+  min-height: 0;
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding: 4px 0;
+}
+.board-area > :first-child {
+  margin-top: auto;
+}
+.board-area > :last-child {
+  margin-bottom: auto;
+}
+.board {
+  padding: 6px;
+}
+.opponent {
+  min-width: 0;
+  gap: 3px;
+  padding: 4px 6px;
+}
+.oname {
+  max-width: 100%;
+  min-width: 0;
+}
+.oname-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.otag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--team-a);
+}
+.otag.t1 {
+  background: var(--team-b);
+}
+.count {
+  white-space: nowrap;
+}
+
+.me-area {
+  flex: none;
+  padding: 6px 10px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+.status {
+  min-height: 36px;
+  gap: 8px;
+}
+.muted-light {
+  color: #b9d4c8;
+}
+.your-turn {
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 6px 14px;
+  border-radius: 999px;
+  animation: pulse 1s infinite alternate;
+}
+.side-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+.btn.big {
+  padding: 12px 18px;
+  font-size: 1.05rem;
+  min-height: 48px;
+}
+
+/* La mano: las fichas se ajustan al ancho para que quepan 10 en una fila. */
+.hand-wrap {
+  --hand-s: clamp(26px, calc((100vw - 40px) / 11.5), 44px);
+}
+.hand {
+  gap: clamp(3px, 1vw, 8px);
+  padding: 12px 0 4px;
+  flex-wrap: wrap;
+}
+.hand .domino.lg {
+  --s: var(--hand-s);
+}
+.hand-tools {
+  gap: 6px;
+}
+.hand-tools .muted {
+  color: #9fbfb1;
+}
+.log {
+  margin-top: 4px;
+  gap: 10px;
+}
+
+/* Sorteo: fichas grandes y fáciles de tocar. */
+.pick-area {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 10px 20px;
+  gap: 8px;
+}
+.pick-area h2 {
+  font-size: 1.3rem;
+}
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 640px;
+  justify-items: center;
+}
+.pick-grid .domino,
+.pick-grid .domino.back,
+.pick-grid .domino.sm {
+  --s: 28px;
+}
+.pick-chosen .domino.md {
+  --s: 26px;
+}
+
+/* Resumen del sorteo y discusión de la salida, compactos. */
+.pick-summary {
+  gap: 4px;
+  font-size: 0.95rem;
+}
+.pick-summary .pick-chosen {
+  gap: 8px;
+}
+.pick-chosen-item {
+  padding: 4px 6px;
+  font-size: 0.8rem;
+}
+.agree {
+  padding: 10px 14px;
+  gap: 8px;
+  max-width: 100%;
+}
+.agree .btn {
+  min-height: 44px;
+}
+
+/* Carteles: que no se salgan en pantallas estrechas. */
+.pass-alert {
+  font-size: clamp(1.05rem, 4.5vw, 1.5rem);
+  padding: 12px 18px;
+}
+.modal {
+  max-height: calc(100dvh - 32px);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --t: 18px;
+  }
+  .meta-code,
+  .meta-round {
+    display: none;
+  }
+  .felt {
+    gap: 4px;
+    padding: 6px;
+  }
+  .opponent.left,
+  .opponent.right {
+    max-width: 72px;
+  }
+  .opponent.top .backs {
+    max-width: 160px;
+  }
+  .board-empty {
+    font-size: 0.95rem;
+    gap: 8px;
+  }
+  .hand-tools .muted {
+    display: none;
+  }
+  .log li:nth-child(n + 3) {
+    display: none;
+  }
+  .side-pick .muted-light {
+    display: none;
+  }
+}
+
+/* Móvil en horizontal: muy poca altura. */
+@media (max-height: 480px) {
+  .opponent.top .backs {
+    display: none;
+  }
+  .log {
+    display: none;
+  }
+  .hand {
+    padding-top: 8px;
+  }
+  .hand-wrap {
+    --hand-s: clamp(22px, calc((100vh - 140px) / 2.2), 36px);
+  }
+}
+
+@media (max-width: 640px) {
+  .opponent.left .oname-text,
+  .opponent.right .oname-text {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+    font-size: 0.8rem;
+    line-height: 1.1;
+  }
+  .opponent.left .oname,
+  .opponent.right .oname {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+/* Fichas del tablero: legibles en el móvil. */
+.board .domino.sm {
+  --s: clamp(20px, 6.2vw, 30px);
+}
+.board {
+  gap: 1px;
+  row-gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    padding: 16px 12px;
+  }
+  .results td {
+    padding: 5px 3px;
+  }
+  .hand-small {
+    --t: 15px;
+    gap: 3px;
+  }
+  .round-announce {
+    padding: 20px 18px;
+  }
+}
+
+/* Móvil en horizontal (poca altura): rivales sin fichas dibujadas, mano y barra más bajas. */
+@media (max-height: 480px) {
+  .backs,
+  .backs.col,
+  .otag {
+    display: none;
+  }
+  .felt {
+    padding: 4px 8px;
+    gap: 4px;
+  }
+  .opponent {
+    padding: 2px 6px;
+  }
+  .scorebar {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .me-area {
+    padding-top: 4px;
+  }
+  .status {
+    min-height: 30px;
+  }
+  .your-turn {
+    padding: 3px 12px;
+  }
+  .hand {
+    padding: 8px 0 2px;
+  }
+  .hand-wrap {
+    --hand-s: clamp(20px, calc((100vh - 200px) / 3), 28px);
+  }
+  .hand-tools .muted {
+    display: none;
+  }
+  .board .domino.sm {
+    --s: 22px;
+  }
+}
+
+@media (min-width: 900px) and (min-height: 600px) {
+  .board .domino.sm {
+    --s: 34px;
+  }
+}
+
+/* ---------- acumulado de puntos ---------- */
+.scores {
+  cursor: pointer;
+}
+.sheet-bg {
+  z-index: 45;
+}
+.sheet {
+  text-align: left;
+  width: min(520px, 100%);
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sheet-head h2 {
+  margin: 0;
+}
+.sheet .muted.small {
+  margin: 4px 0 12px;
+}
+.sheet-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.sheet-total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 2px solid #eee7d6;
+  border-top: 5px solid var(--team-a);
+  text-align: center;
+}
+.sheet-total.t1 {
+  border-top-color: var(--team-b);
+}
+.sheet-total.t2 {
+  border-top-color: #9b6ad6;
+}
+.sheet-total.lead {
+  background: #fff6de;
+  border-color: var(--accent);
+}
+.sheet-total strong {
+  font-size: 2rem;
+  line-height: 1.1;
+}
+.st-name {
+  font-weight: 700;
+}
+.st-players,
+.st-left {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.sheet-table-wrap {
+  max-height: 45dvh;
+  overflow-y: auto;
+  border: 1px solid #eee7d6;
+  border-radius: 10px;
+}
+.sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.sheet-table th {
+  position: sticky;
+  top: 0;
+  background: #f3efe3;
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+}
+.sheet-table td {
+  padding: 6px 8px;
+  border-top: 1px solid #eee7d6;
+  vertical-align: top;
+}
+.sheet-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+.sheet-table .gain {
+  color: #1f8a4c;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+.sheet-table .acc {
+  font-weight: 700;
+}
+.scorebar .btn.tiny.primary {
+  white-space: nowrap;
+}
+@media (max-width: 400px) {
+  .meta-target {
+    display: none;
+  }
+}
+
+/* ---------- arrastrar fichas de la mano ---------- */
+.hand-slot.placeholder .domino {
+  opacity: 0.25;
+  box-shadow: none;
+  outline: 2px dashed rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+  transform: none;
+}
+.hand-ghost {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  transform: translateY(-14px) scale(1.18) rotate(-4deg);
+  transform-origin: center;
+  filter: drop-shadow(0 14px 14px rgba(0, 0, 0, 0.45));
+  animation: lift 120ms ease-out;
+}
+.hand-ghost .domino.lg {
+  --s: var(--hand-s);
+}
+@keyframes lift {
+  from {
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+body:has(.hand-ghost) {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* ---------- girar fichas de la mano ---------- */
+.hand-slot {
+  -webkit-touch-callout: none;
+}
+.hand-slot.spin .domino {
+  animation: tile-spin 240ms ease-out;
+}
+@keyframes tile-spin {
+  from {
+    transform: rotate(-180deg) scale(0.9);
+  }
 }

@@ -90,6 +90,21 @@ export class GameGateway implements OnGatewayDisconnect, OnModuleDestroy {
     return this.withRoom(client, (room, me) => this.rooms.draw(room, me));
   }
 
+  @SubscribeMessage('game:pick')
+  pick(@ConnectedSocket() client: Socket, @MessageBody() body: { index: number }): Ack {
+    return this.withRoom(client, (room, me) => this.rooms.pickStart(room, me, body?.index));
+  }
+
+  @SubscribeMessage('game:requestStart')
+  requestStart(@ConnectedSocket() client: Socket): Ack {
+    return this.withRoom(client, (room, me) => this.rooms.requestStart(room, me));
+  }
+
+  @SubscribeMessage('game:respondStart')
+  respondStart(@ConnectedSocket() client: Socket, @MessageBody() body: { accept: boolean }): Ack {
+    return this.withRoom(client, (room, me) => this.rooms.respondStart(room, me, body?.accept));
+  }
+
   @SubscribeMessage('game:nextRound')
   nextRound(@ConnectedSocket() client: Socket): Ack {
     return this.withRoom(client, (room, me) => this.rooms.nextRound(room, me));

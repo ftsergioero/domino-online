@@ -28,6 +28,9 @@ export default function Page() {
         room={room}
         onPlay={actions.play}
         onDraw={actions.draw}
+        onPick={actions.pick}
+        onRequestStart={actions.requestStart}
+        onRespondStart={actions.respondStart}
         onNextRound={actions.nextRound}
         onLobby={actions.lobby}
         onLeave={actions.leave}
