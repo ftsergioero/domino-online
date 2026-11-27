@@ -144,6 +144,8 @@ export function Board({
       {items.map((it) => {
         const side: Side | null = it.index === 0 ? 'left' : it.index === last ? 'right' : null;
         const onTarget = side && last > 0 ? targets?.[side] : undefined;
+        // Marca los extremos para saber a cuál se suelta una ficha arrastrada.
+        const ends = it.index === 0 && it.index === last ? 'both' : side ?? undefined;
         const tile = (
           <Domino
             a={it.a}
@@ -158,6 +160,7 @@ export function Board({
             key={it.index}
             type="button"
             className="snake-tile target"
+            data-end={ends}
             style={{ left: it.x, top: it.y }}
             onClick={onTarget}
             aria-label={`Jugar en este extremo (${side === 'left' ? it.a : it.b})`}
@@ -165,7 +168,7 @@ export function Board({
             {tile}
           </button>
         ) : (
-          <span key={it.index} className="snake-tile" style={{ left: it.x, top: it.y }}>
+          <span key={it.index} className="snake-tile" data-end={ends} style={{ left: it.x, top: it.y }}>
             {tile}
           </span>
         );

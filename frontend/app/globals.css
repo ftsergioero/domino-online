@@ -1557,3 +1557,21 @@ button.snake-tile {
 button.snake-tile .domino {
   box-shadow: 0 0 0 3px var(--accent), 0 4px 10px rgba(0, 0, 0, 0.35);
 }
+
+/* ---------- soltar una ficha en la mesa para jugarla ---------- */
+.felt {
+  transition: box-shadow 0.12s ease;
+}
+.felt.drop-ok {
+  box-shadow: inset 0 0 0 4px #46e08a, inset 0 0 40px rgba(70, 224, 138, 0.35);
+}
+.felt.drop-no {
+  box-shadow: inset 0 0 0 4px #ff6b5e, inset 0 0 40px rgba(255, 107, 94, 0.3);
+}
+.drop-hint {
+  background: #b3261e;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+}

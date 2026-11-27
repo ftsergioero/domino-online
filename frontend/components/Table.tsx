@@ -72,6 +72,30 @@ export function Table({
     }
   };
 
+  /** Ficha arrastrada y soltada sobre la mesa: se juega si es válida, en el extremo más cercano. */
+  const [dropHint, setDropHint] = useState<string | null>(null);
+  useEffect(() => {
+    if (!dropHint) return;
+    const t = setTimeout(() => setDropHint(null), 2200);
+    return () => clearTimeout(t);
+  }, [dropHint]);
+
+  const dropOnTable = (i: number, x: number, y: number) => {
+    const m = moveFor(i);
+    if (!myTurn) return setDropHint('Espera tu turno');
+    if (!m) return setDropHint('Esa ficha no se puede jugar');
+    setSelected(null);
+    if (!ends || m.sides.length === 1 || ends.left === ends.right) return onPlay(i, m.sides[0]);
+    // Cabe en los dos extremos: el más cercano a donde se soltó.
+    const dist = (side: Side) => {
+      const el = document.querySelector(`[data-end="${side}"], [data-end="both"]`);
+      if (!el) return Infinity;
+      const r = el.getBoundingClientRect();
+      return Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
+    };
+    onPlay(i, dist('left') <= dist('right') ? 'left' : 'right');
+  };
+
   // Aviso con vibración (en móviles que lo permitan) cuando empieza tu turno o te toca decidir.
   const needsMe =
     myTurn ||
@@ -130,7 +154,7 @@ export function Table({
         <PickBoard g={g} onPick={onPick} />
       ) : (
       <>
-      <div className={`felt n${n}`}>
+      <div className={`felt n${n}`} data-drop-table>
         {opponents.map((seat, k) => {
           const s = g.seats[seat];
           const pos = POSITIONS[n][k + 1];
@@ -187,7 +211,9 @@ export function Table({
 
       <section className={`me-area ${myTurn ? 'turn' : ''}`}>
         <div className="status">
-          {g.phase === 'playing' &&
+          {dropHint && <span className="drop-hint">{dropHint}</span>}
+          {!dropHint &&
+            g.phase === 'playing' &&
             (myTurn ? (
               g.canDraw ? (
                 <>
@@ -225,6 +251,8 @@ export function Table({
             return selected === i ? 'selected' : playable ? 'playable' : myTurn ? 'dim' : undefined;
           }}
           onTap={clickTile}
+          canDrop={(i) => myTurn && !!moveFor(i)}
+          onDropOnTable={dropOnTable}
         />
         <Log g={g} />
       </section>

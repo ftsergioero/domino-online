@@ -140,17 +140,40 @@ interface Drag {
   offY: number;
 }
 
+/** Zona de la mesa (el tapete verde) que hay bajo el puntero, si la hay. */
+function tableUnder(x: number, y: number): HTMLElement | null {
+  for (const el of document.elementsFromPoint(x, y)) {
+    const t = (el as HTMLElement).closest<HTMLElement>('[data-drop-table]');
+    if (t) return t;
+  }
+  return null;
+}
+
+/** Ilumina la mesa mientras se arrastra encima: verde si se puede soltar ahí, rojo si no. */
+function markTable(table: HTMLElement | null, ok: boolean | null) {
+  document.querySelectorAll('[data-drop-table]').forEach((el) => {
+    el.classList.toggle('drop-ok', el === table && ok === true);
+    el.classList.toggle('drop-no', el === table && ok === false);
+  });
+}
+
 export function Hand({
   hand,
   storageKey,
   stateOf,
   onTap,
+  canDrop,
+  onDropOnTable,
 }: {
   hand: Tile[];
   /** Clave para recordar el orden (por sala, jugador y mano). */
   storageKey: string;
   stateOf: (index: number) => 'playable' | 'selected' | 'dim' | undefined;
   onTap: (index: number) => void;
+  /** Si soltar esa ficha en la mesa sería una jugada válida ahora mismo. */
+  canDrop?: (index: number) => boolean;
+  /** Se soltó la ficha sobre la mesa en (x, y). */
+  onDropOnTable?: (index: number, x: number, y: number) => void;
 }) {
   const [order, setOrder] = useHandOrder(hand, storageKey);
   const [flipped, setFlipped] = useState<string[]>(() => {
@@ -227,6 +250,10 @@ export function Hand({
   };
   const stateRef = useRef(stateOf);
   stateRef.current = stateOf;
+  const canDropRef = useRef(canDrop);
+  canDropRef.current = canDrop;
+  const onDropRef = useRef(onDropOnTable);
+  onDropRef.current = onDropOnTable;
 
   const onPointerDown = (e: React.PointerEvent<HTMLElement>, key: string) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -251,7 +278,11 @@ export function Hand({
       }
       ev.preventDefault();
       setDrag({ key, x: ev.clientX, y: ev.clientY, offX: startX - rect.left, offY: startY - rect.top });
-      reorderAt(key, ev.clientX, ev.clientY);
+      // Sobre la mesa: se marca si soltarla ahí la juega. Junto a la mano: se reordena.
+      const i = indexRef.current.get(key);
+      const table = tableUnder(ev.clientX, ev.clientY);
+      markTable(table, table && i !== undefined ? (canDropRef.current?.(i) ?? false) : null);
+      if (!table) reorderAt(key, ev.clientX, ev.clientY);
     };
     const end = (ev: PointerEvent) => {
       if (ev.pointerId !== e.pointerId) return;
@@ -260,6 +291,13 @@ export function Hand({
       window.removeEventListener('pointercancel', end);
       clearTimeout(timer);
       setDrag(null);
+      markTable(null, null);
+      // Soltada encima de la mesa: se intenta jugar.
+      if (dragging && ev.type === 'pointerup' && tableUnder(ev.clientX, ev.clientY)) {
+        const i = indexRef.current.get(key);
+        if (i !== undefined) onDropRef.current?.(i, ev.clientX, ev.clientY);
+        return;
+      }
       if (!dragging && !longPressed && ev.type === 'pointerup') {
         const i = indexRef.current.get(key);
         if (i === undefined) return;
