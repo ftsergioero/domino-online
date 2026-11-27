@@ -1349,3 +1349,184 @@ body:has(.hand-ghost) {
     transform: rotate(-180deg) scale(0.9);
   }
 }
+
+/* =====================================================================
+   Móviles estrechos: los rivales en una franja arriba y el tablero a todo
+   el ancho. Evita que los laterales estrechen el centro y corten botones.
+   ===================================================================== */
+.split > * {
+  min-width: 0;
+}
+.field select,
+.field input {
+  width: 100%;
+  min-width: 0;
+}
+.icon-only {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .felt {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'left top right'
+      'board board board';
+    gap: 4px 6px;
+    padding: 6px;
+  }
+  .felt.n2 {
+    grid-template-areas:
+      '. top .'
+      'board board board';
+  }
+  .opponent,
+  .opponent.left,
+  .opponent.right,
+  .opponent.top {
+    align-self: stretch;
+    max-width: none;
+    padding: 4px 2px;
+    gap: 2px;
+    background: rgba(0, 0, 0, 0.15);
+  }
+  .opponent.turn {
+    background: rgba(242, 179, 61, 0.22);
+  }
+  .opponent .backs,
+  .opponent .backs.col {
+    display: none;
+  }
+  .opponent .oname,
+  .opponent.left .oname,
+  .opponent.right .oname {
+    flex-direction: row;
+    gap: 4px;
+    justify-content: center;
+  }
+  .opponent .oname-text,
+  .opponent.left .oname-text,
+  .opponent.right .oname-text {
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .otag {
+    font-size: 0.62rem;
+    padding: 0 6px;
+  }
+  .count {
+    font-size: 0.72rem;
+  }
+
+  /* Cabecera: el marcador primero; «Puntos» solo con icono. */
+  .scorebar {
+    gap: 6px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .score {
+    padding: 2px 6px;
+    font-size: 0.82rem;
+  }
+  .score .sname {
+    max-width: none;
+    overflow: visible;
+  }
+  .score strong {
+    font-size: 1.05rem;
+  }
+  .meta {
+    gap: 6px;
+  }
+  .meta-target,
+  .label-long {
+    display: none;
+  }
+  .icon-only {
+    display: inline;
+  }
+
+  /* Centro: resumen del sorteo en una línea y botones de la salida juntos. */
+  .board-empty {
+    width: 100%;
+    padding: 0 4px;
+  }
+  .pick-summary {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 0.85rem;
+    gap: 6px;
+  }
+  .pick-summary .pick-chosen-item {
+    flex-direction: row;
+    padding: 2px 6px;
+  }
+  .agree {
+    width: 100%;
+    padding: 10px;
+  }
+  .agree .row {
+    margin-top: 4px;
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+  .agree .row .btn {
+    flex: 1;
+  }
+  .side-pick .btn.big {
+    padding: 10px 12px;
+  }
+}
+
+/* Pantallas muy bajas (móvil pequeño o con la barra del navegador). */
+@media (max-width: 480px) and (max-height: 620px) {
+  .pick-summary .pick-chosen {
+    display: none;
+  }
+  .status {
+    min-height: 30px;
+  }
+  .log {
+    display: none;
+  }
+  .hand {
+    padding-top: 10px;
+  }
+}
+@media (max-width: 480px) {
+  .agree .btn,
+  .side-pick .btn {
+    white-space: nowrap;
+  }
+}
+.your-turn {
+  white-space: nowrap;
+}
+.sheet-table-wrap {
+  overflow-x: auto;
+}
+@media (max-width: 380px) {
+  .label-hint {
+    display: none;
+  }
+  .sheet {
+    padding: 14px 10px;
+  }
+  .sheet-head h2 {
+    font-size: 1rem;
+  }
+  .sheet-table {
+    font-size: 0.8rem;
+  }
+  .sheet-table th,
+  .sheet-table td {
+    padding: 5px 4px;
+  }
+  .sheet-total strong {
+    font-size: 1.6rem;
+  }
+}

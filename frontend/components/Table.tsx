@@ -115,8 +115,9 @@ export function Table({
           <span className="meta-code">
             Sala <b>{room.code}</b>
           </span>
-          <button className="btn tiny primary" onClick={() => setShowScores(true)}>
-            📊 Puntos
+          <button className="btn tiny primary" onClick={() => setShowScores(true)} aria-label="Puntos acumulados">
+            {/* En móviles estrechos solo se ve el icono. */}
+            📊<span className="label-long"> Puntos</span>
           </button>
           <button className="btn tiny" onClick={onLeave}>
             Salir
@@ -215,7 +216,8 @@ export function Table({
                 </div>
               ) : (
                 <span className="your-turn">
-                  <b>¡Te toca!</b> Toca una ficha iluminada
+                  <b>¡Te toca!</b>
+                  <span className="label-hint"> Toca una ficha iluminada</span>
                 </span>
               )
             ) : (
