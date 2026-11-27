@@ -6,8 +6,11 @@ const PIPS_V: Record<number, number[]> = {
   4: [0, 2, 6, 8],
   5: [0, 2, 4, 6, 8],
   6: [0, 2, 3, 5, 6, 8],
+  7: [0, 2, 3, 4, 5, 6, 8],
+  8: [0, 1, 2, 3, 5, 6, 7, 8],
+  9: [0, 1, 2, 3, 4, 5, 6, 7, 8],
 };
-const PIPS_H: Record<number, number[]> = { ...PIPS_V, 6: [0, 1, 2, 6, 7, 8] };
+const PIPS_H: Record<number, number[]> = { ...PIPS_V, 6: [0, 1, 2, 6, 7, 8], 7: [0, 1, 2, 4, 6, 7, 8] };
 
 function Half({ value, horizontal }: { value: number; horizontal: boolean }) {
   const on = (horizontal ? PIPS_H : PIPS_V)[value];

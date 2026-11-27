@@ -9,3 +9,30 @@ services:
       # Orígenes permitidos (separados por comas). Vacío = cualquiera.
       - CORS_ORIGIN=${CORS_ORIGIN:-}
     restart: unless-stopped
+
+  # 4 copias del frontend, una por jugador, en puertos distintos
+  # (cada puerto es un origen distinto => sesión/localStorage independiente).
+  frontend-1: &frontend
+    build: ./frontend
+    image: domino-frontend
+    container_name: domino-frontend-1
+    ports:
+      - "3011:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+  frontend-2:
+    <<: *frontend
+    container_name: domino-frontend-2
+    ports:
+      - "3012:3000"
+  frontend-3:
+    <<: *frontend
+    container_name: domino-frontend-3
+    ports:
+      - "3013:3000"
+  frontend-4:
+    <<: *frontend
+    container_name: domino-frontend-4
+    ports:
+      - "3014:3000"

@@ -8,8 +8,12 @@ import {
   drawTile,
   legalMoves,
   nextRound,
+  pickStartTile,
   playTile,
+  requestStart,
+  respondStart,
   sideOf,
+  sidesPendingPick,
   winningSide,
 } from './domino';
 
@@ -149,6 +153,21 @@ export class RoomsService {
     room.lastActivity = Date.now();
   }
 
+  pickStart(room: Room, playerId: string, index: unknown) {
+    pickStartTile(room.game!, this.seat(room, playerId), Number(index));
+    room.lastActivity = Date.now();
+  }
+
+  requestStart(room: Room, playerId: string) {
+    requestStart(room.game!, this.seat(room, playerId));
+    room.lastActivity = Date.now();
+  }
+
+  respondStart(room: Room, playerId: string, accept: unknown) {
+    respondStart(room.game!, this.seat(room, playerId), accept === true);
+    room.lastActivity = Date.now();
+  }
+
   nextRound(room: Room, playerId: string) {
     this.seat(room, playerId);
     nextRound(room.game!);
@@ -174,7 +193,17 @@ export class RoomsService {
     };
     if (!g) return { ...base, game: null };
     const seat = g.players.findIndex((p) => p.id === playerId);
-    const showHands = g.phase !== 'playing';
+    const showHands = g.phase === 'roundOver' || g.phase === 'gameOver';
+    // Sorteo: solo se revelan las fichas ya levantadas. Se muestra hasta que empieza a jugarse la primera mano.
+    const pick =
+      g.pick && (g.phase === 'picking' || g.board.length === 0)
+        ? {
+            count: g.pick.deck.length,
+            picks: g.pick.picks.map((p) => ({ index: p.index, player: p.player, tile: g.pick!.deck[p.index] })),
+            pendingSides: sidesPendingPick(g),
+            winner: g.pick.winner,
+          }
+        : null;
     return {
       ...base,
       game: {
@@ -190,6 +219,12 @@ export class RoomsService {
         lastResult: showHands ? g.lastResult : null,
         winnerSide: winningSide(g),
         log: g.log.slice(-8),
+        logTotal: g.log.length,
+        pick,
+        startSide: g.startSide,
+        startRequest: g.startRequest,
+        startRejectedBy: g.startRejectedBy,
+        history: g.history,
         seat,
         hand: seat >= 0 ? g.players[seat].hand : [],
         moves: seat >= 0 && g.turn === seat ? legalMoves(g, seat) : [],

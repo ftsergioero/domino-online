@@ -44,13 +44,19 @@ por defecto se permite cualquiera).
 
 ## Reglas
 
-- Doble seis (28 fichas), 7 fichas por jugador, de 2 a 4 jugadores.
+- Doble nueve (55 fichas), 10 fichas por jugador, de 2 a 4 jugadores. Con 4 (por parejas) las 15 sobrantes quedan fuera.
 - **4 jugadores:** por parejas (puestos 1 y 3 contra 2 y 4; el anfitrión puede reordenar los puestos). Sin pozo.
 - **2 o 3 jugadores:** individual. Las fichas sobrantes forman el pozo: si no puedes jugar, robas.
-- La primera mano la abre quien tenga el doble más alto, jugándolo. Las siguientes, el ganador de la mano anterior.
+- **Sorteo de la salida:** antes de la primera mano las 55 fichas se ponen boca abajo y un jugador de cada
+  pareja (o cada jugador, en individual) levanta una. Sale la pareja con la ficha más alta (más puntos; a
+  igualdad, la de la cara más alta).
+- **Discutir la salida (parejas):** uno de la pareja que sale pulsa «Quiero salir» y su compañero tiene que
+  dejarle. Si no se ponen de acuerdo, nadie sale. En las siguientes manos sale la pareja que ganó la anterior.
+- En individual sale el ganador del sorteo y, después, el ganador de la mano anterior.
+- Quien sale puede abrir con la ficha que quiera.
 - Si no puedes jugar ni robar, pasas automáticamente.
 - **Dominó:** quien se queda sin fichas gana la mano; su bando suma los puntos de todas las fichas que quedan.
-- **Tranque:** si nadie puede jugar, gana el bando con menos puntos en la mano (empate: nadie suma).
+- **Tranque:** si nadie puede jugar, gana el jugador con menos puntos en la mano en ese momento y su bando suma todos los puntos (si empatan jugadores de bandos distintos, nadie suma).
 - Gana la partida quien llegue antes a la puntuación elegida (50, 100, 150 o 200).
 
 Si se cierra el navegador o se pierde la conexión, al volver a abrir la página se reconecta solo a la partida.

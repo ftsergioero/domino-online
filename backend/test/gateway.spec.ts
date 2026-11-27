@@ -49,9 +49,21 @@ describe('gateway en tiempo real', () => {
     expect((await emit(cs[0].socket, 'game:start')).ok).toBe(true);
     await new Promise((r) => setTimeout(r, 50));
 
+    // Sorteo boca abajo: no se ven las fichas sin levantar.
+    expect(cs[0].state.game.phase).toBe('picking');
+    expect(cs[0].state.game.pick.count).toBe(55);
+    expect(cs[0].state.game.pick.picks).toEqual([]);
+    expect((await emit(cs[0].socket, 'game:pick', { index: 4 })).ok).toBe(true);
+    expect((await emit(cs[2].socket, 'game:pick', { index: 5 })).ok).toBe(false); // misma pareja
+    expect((await emit(cs[1].socket, 'game:pick', { index: 5 })).ok).toBe(true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(cs[0].state.game.phase).toBe('agreeing');
+    expect(cs[3].state.game.pick.winner).not.toBeNull();
+
     // Nadie ve las fichas de los demás.
-    for (const c of cs) expect(c.state.game.hand).toHaveLength(7);
+    for (const c of cs) expect(c.state.game.hand).toHaveLength(10);
     expect(JSON.stringify(cs[0].state)).not.toContain('boneyard"');
+    expect(JSON.stringify(cs[0].state)).not.toContain('deck');
 
     let guard = 0;
     while (cs[0].state.game.phase !== 'gameOver') {
@@ -59,6 +71,13 @@ describe('gateway en tiempo real', () => {
       const g = cs[0].state.game;
       if (g.phase === 'roundOver') {
         await emit(cs[0].socket, 'game:nextRound');
+      } else if (g.phase === 'agreeing') {
+        const team = [0, 1, 2, 3].filter((i) => g.seats[i].side === g.startSide);
+        if (g.startRequest === null) {
+          expect((await emit(cs[team[0]].socket, 'game:requestStart')).ok).toBe(true);
+        } else {
+          expect((await emit(cs[team[1]].socket, 'game:respondStart', { accept: true })).ok).toBe(true);
+        }
       } else {
         const c = cs[g.turn];
         const m = c.state.game.moves[0];

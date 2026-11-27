@@ -1,20 +1,33 @@
 /**
- * Motor del juego de dominó (doble seis).
+ * Motor del juego de dominó (doble nueve: 55 fichas).
  *
  * Reglas:
- * - 4 jugadores: por parejas (asientos 0 y 2 contra 1 y 3), 7 fichas cada uno, sin pozo.
- * - 2 o 3 jugadores: individual, 7 fichas cada uno; las fichas sobrantes forman el pozo.
+ * - 4 jugadores: por parejas (asientos 0 y 2 contra 1 y 3), 10 fichas cada uno, sin pozo;
+ *   las 15 fichas sobrantes quedan fuera de juego ("duermen").
+ * - 2 o 3 jugadores: individual, 10 fichas cada uno; las fichas sobrantes forman el pozo.
  *   Si no puedes jugar debes robar del pozo hasta poder; si el pozo está vacío, pasas.
- * - Primera mano: sale quien tenga el doble más alto (y debe jugarlo).
- *   Siguientes manos: sale el ganador de la mano anterior con la ficha que quiera.
+ * - Sorteo de la salida (antes de la primera mano): las 55 fichas se ponen boca abajo y un
+ *   jugador de cada pareja (o cada jugador, en individual) levanta una. La ficha más alta
+ *   (más puntos; si empatan, la de la cara más alta) decide quién sale.
+ * - Por parejas, la pareja que sale "discute la salida": uno pide salir y su compañero
+ *   tiene que aceptarlo. Hasta que no se pongan de acuerdo nadie juega.
+ *   En las siguientes manos sale la pareja que ganó la anterior, del mismo modo.
+ * - Individual: sale el ganador del sorteo y, después, el ganador de la mano anterior.
+ * - Quien sale puede abrir con la ficha que quiera.
  * - Si un jugador se queda sin fichas ("dominó"), su bando gana la suma de puntos
  *   de todas las fichas que quedan en las manos.
- * - Si nadie puede jugar ("tranque"), gana el bando con menos puntos en la mano y se
- *   lleva la suma de todas las fichas restantes. En caso de empate nadie suma.
+ * - Si nadie puede jugar ("tranque"), gana el jugador con menos puntos en la mano en ese
+ *   momento; su bando se lleva la suma de todas las fichas restantes. Si empatan jugadores
+ *   de bandos distintos, nadie suma.
  * - Gana la partida el primer bando que llegue a la puntuación objetivo.
  */
 
 export type Tile = [number, number];
+
+/** Número más alto del juego (doble nueve). */
+export const MAX_PIP = 9;
+/** Fichas que recibe cada jugador. */
+export const HAND_SIZE = 10;
 export type Side = 'left' | 'right';
 
 /** Ficha colocada en la mesa, orientada: `a` queda a la izquierda y `b` a la derecha. */
@@ -29,7 +42,20 @@ export interface GamePlayer {
   hand: Tile[];
 }
 
-export type Phase = 'playing' | 'roundOver' | 'gameOver';
+/**
+ * - picking: sorteo boca abajo para decidir quién sale.
+ * - agreeing: la pareja que sale decide quién de los dos abre.
+ */
+export type Phase = 'picking' | 'agreeing' | 'playing' | 'roundOver' | 'gameOver';
+
+export interface StartPick {
+  /** Fichas boca abajo del sorteo. */
+  deck: Tile[];
+  /** Fichas levantadas: posición en `deck` y jugador que la levantó. */
+  picks: { index: number; player: number }[];
+  /** Jugador que sacó la ficha más alta (cuando ya han levantado todos). */
+  winner: number | null;
+}
 export type Mode = 'teams' | 'individual';
 
 export interface RoundResult {
@@ -57,6 +83,8 @@ export interface GameState {
   players: GamePlayer[];
   board: PlacedTile[];
   boneyard: Tile[];
+  /** Fichas que no se reparten ni se pueden robar (con 4 jugadores). */
+  sleeping: Tile[];
   turn: number;
   phase: Phase;
   scores: number[];
@@ -68,6 +96,26 @@ export interface GameState {
   lastResult: RoundResult | null;
   nextStarter: number;
   log: LogEntry[];
+  /** Sorteo de la salida de la primera mano. */
+  pick: StartPick | null;
+  /** Bando que debe decidir quién sale (fase `agreeing`). */
+  startSide: number | null;
+  /** Jugador que ha pedido salir y espera la respuesta de su compañero. */
+  startRequest: number | null;
+  /** Último jugador que rechazó una petición de salida (para avisar). */
+  startRejectedBy: number | null;
+  /** Resultado de cada mano terminada, para el acumulado de puntos. */
+  history: HistoryEntry[];
+}
+
+export interface HistoryEntry {
+  round: number;
+  reason: 'domino' | 'tranque';
+  winnerSide: number | null;
+  winnerPlayer: number | null;
+  points: number;
+  /** Marcador de cada bando después de esta mano. */
+  scores: number[];
 }
 
 export class GameError extends Error {}
@@ -76,7 +124,7 @@ export type Rng = () => number;
 
 export function fullSet(): Tile[] {
   const tiles: Tile[] = [];
-  for (let i = 0; i <= 6; i++) for (let j = i; j <= 6; j++) tiles.push([i, j]);
+  for (let i = 0; i <= MAX_PIP; i++) for (let j = i; j <= MAX_PIP; j++) tiles.push([i, j]);
   return tiles;
 }
 
@@ -138,8 +186,9 @@ export function createGame(
     players: players.map((p) => ({ id: p.id, name: p.name, hand: [] })),
     board: [],
     boneyard: [],
-    turn: 0,
-    phase: 'playing',
+    sleeping: [],
+    turn: -1,
+    phase: 'picking',
     scores: mode === 'teams' ? [0, 0] : players.map(() => 0),
     targetScore,
     round: 0,
@@ -148,38 +197,110 @@ export function createGame(
     lastResult: null,
     nextStarter: -1,
     log: [],
+    pick: { deck: shuffle(fullSet(), rng), picks: [], winner: null },
+    startSide: null,
+    startRequest: null,
+    startRejectedBy: null,
+    history: [],
   };
-  dealRound(state, rng);
   return state;
 }
 
-/** Reparte una nueva mano. `nextStarter === -1` indica que sale el doble más alto. */
+/** Valor de una ficha en el sorteo: más puntos gana; a igualdad, la cara más alta. */
+export const pickScore = (t: Tile) => pips(t) * 10 + Math.max(t[0], t[1]);
+
+/** Bandos que todavía no han levantado ficha en el sorteo. */
+export function sidesPendingPick(state: GameState): number[] {
+  if (state.phase !== 'picking' || !state.pick) return [];
+  const done = new Set(state.pick.picks.map((p) => sideOf(state, p.player)));
+  return state.scores.map((_, side) => side).filter((side) => !done.has(side));
+}
+
+/** Un jugador levanta una ficha boca abajo en el sorteo de la salida. */
+export function pickStartTile(state: GameState, playerIndex: number, index: number, rng: Rng = Math.random): void {
+  if (state.phase !== 'picking' || !state.pick) throw new GameError('No se está sorteando la salida');
+  const pick = state.pick;
+  if (!Number.isInteger(index) || index < 0 || index >= pick.deck.length) throw new GameError('Ficha no válida');
+  if (pick.picks.some((p) => p.index === index)) throw new GameError('Esa ficha ya está levantada');
+  const side = sideOf(state, playerIndex);
+  if (!sidesPendingPick(state).includes(side)) {
+    throw new GameError(state.mode === 'teams' ? 'Tu pareja ya levantó su ficha' : 'Ya levantaste tu ficha');
+  }
+  pick.picks.push({ index, player: playerIndex });
+  if (sidesPendingPick(state).length > 0) return;
+
+  // Ya levantaron todos: la ficha más alta decide quién sale.
+  const best = pick.picks.reduce((a, b) => (pickScore(pick.deck[b.index]) > pickScore(pick.deck[a.index]) ? b : a));
+  pick.winner = best.player;
+  state.nextStarter = best.player;
+  dealRound(state, rng);
+}
+
+/** Reparte una nueva mano y prepara la salida. */
 export function dealRound(state: GameState, rng: Rng = Math.random): void {
   const deck = shuffle(fullSet(), rng);
-  for (const p of state.players) p.hand = deck.splice(0, 7);
-  state.boneyard = deck;
+  for (const p of state.players) p.hand = deck.splice(0, HAND_SIZE);
+  // Por parejas no se roba: las sobrantes duermen. Individual: forman el pozo.
+  state.boneyard = state.mode === 'teams' ? [] : deck;
+  state.sleeping = state.mode === 'teams' ? deck : [];
   state.board = [];
   state.consecutivePasses = 0;
   state.round += 1;
-  state.phase = 'playing';
   state.log = [];
+  state.requiredOpening = null;
+  state.startRequest = null;
+  state.startRejectedBy = null;
+  if (state.round > 1) state.pick = null;
 
-  if (state.nextStarter >= 0) {
-    state.turn = state.nextStarter;
-    state.requiredOpening = null;
+  if (state.mode === 'teams') {
+    // La pareja que sale tiene que ponerse de acuerdo en quién abre.
+    state.phase = 'agreeing';
+    state.turn = -1;
+    state.startSide = sideOf(state, state.nextStarter);
   } else {
-    // Busca el doble más alto; si nadie tiene dobles (posible con 2-3 jugadores), la ficha más alta.
-    let best: { player: number; tile: Tile; score: number } | null = null;
-    state.players.forEach((p, i) => {
-      for (const t of p.hand) {
-        const score = t[0] === t[1] ? 100 + t[0] : pips(t) * 10 + Math.max(t[0], t[1]) - 100;
-        if (!best || score > best.score) best = { player: i, tile: t, score };
-      }
-    });
-    const b = best as unknown as { player: number; tile: Tile };
-    state.turn = b.player;
-    state.requiredOpening = b.tile;
+    state.phase = 'playing';
+    state.turn = state.nextStarter;
+    state.startSide = null;
+    autoPass(state);
   }
+}
+
+function assertAgreeing(state: GameState, playerIndex: number) {
+  if (state.phase !== 'agreeing') throw new GameError('No se está decidiendo la salida');
+  if (sideOf(state, playerIndex) !== state.startSide) throw new GameError('La salida le toca a la otra pareja');
+}
+
+/** Un jugador de la pareja que sale pide salir; su compañero tiene que aceptarlo. */
+export function requestStart(state: GameState, playerIndex: number): void {
+  assertAgreeing(state, playerIndex);
+  if (state.startRequest === playerIndex) return;
+  if (state.startRequest !== null) throw new GameError('Tu compañero ya pidió salir: respóndele');
+  state.startRequest = playerIndex;
+  state.startRejectedBy = null;
+}
+
+/**
+ * El compañero responde a la petición de salida. Si acepta, sale quien lo pidió;
+ * si no, nadie sale y hay que volver a pedirlo. Quien pidió salir puede retirarlo.
+ */
+export function respondStart(state: GameState, playerIndex: number, accept: boolean): void {
+  assertAgreeing(state, playerIndex);
+  const req = state.startRequest;
+  if (req === null) throw new GameError('Nadie ha pedido salir');
+  if (req === playerIndex) {
+    state.startRequest = null; // retira su petición
+    return;
+  }
+  if (!accept) {
+    state.startRequest = null;
+    state.startRejectedBy = playerIndex;
+    return;
+  }
+  state.startRequest = null;
+  state.startRejectedBy = null;
+  state.startSide = null;
+  state.phase = 'playing';
+  state.turn = req;
   autoPass(state);
 }
 
@@ -256,18 +377,14 @@ function endRound(state: GameState, reason: 'domino' | 'tranque', dominoPlayer: 
   if (reason === 'domino') {
     winnerSide = sideOf(state, dominoPlayer!);
   } else {
-    const sidePoints = state.scores.map(() => 0);
-    hp.forEach((p, i) => (sidePoints[sideOf(state, i)] += p));
-    const min = Math.min(...sidePoints);
-    const winners = sidePoints.map((p, i) => (p === min ? i : -1)).filter((i) => i >= 0);
-    if (winners.length === 1) {
-      winnerSide = winners[0];
-      // Sale en la siguiente mano el jugador de ese bando con menos puntos.
-      let best = -1;
-      hp.forEach((p, i) => {
-        if (sideOf(state, i) === winnerSide && (best < 0 || p < hp[best])) best = i;
-      });
-      winnerPlayer = best;
+    // Gana el jugador con menos puntos en la mano (y con él, su pareja).
+    // Si empatan jugadores de bandos distintos, nadie gana.
+    const min = Math.min(...hp);
+    const lowest = hp.map((p, i) => (p === min ? i : -1)).filter((i) => i >= 0);
+    const sides = new Set(lowest.map((i) => sideOf(state, i)));
+    if (sides.size === 1) {
+      winnerSide = sideOf(state, lowest[0]);
+      winnerPlayer = lowest[0];
     }
   }
 
@@ -281,6 +398,7 @@ function endRound(state: GameState, reason: 'domino' | 'tranque', dominoPlayer: 
     handPoints: hp,
     hands: state.players.map((p) => p.hand.map((t) => [...t] as Tile)),
   };
+  state.history.push({ round: state.round, reason, winnerSide, winnerPlayer, points, scores: [...state.scores] });
   // Empate en tranque: sale el siguiente al que salió esta mano.
   state.nextStarter = winnerPlayer ?? (state.turn + 1) % state.players.length;
   state.phase = state.scores.some((s) => s >= state.targetScore) ? 'gameOver' : 'roundOver';
