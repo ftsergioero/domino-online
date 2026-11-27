@@ -212,6 +212,7 @@ export class RoomsService {
         round: g.round,
         turn: g.turn,
         board: g.board,
+        boardOrigin: g.boardOrigin,
         boneyardCount: g.boneyard.length,
         scores: g.scores,
         targetScore: g.targetScore,

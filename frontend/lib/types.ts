@@ -62,6 +62,8 @@ export interface GameView {
   round: number;
   turn: number;
   board: PlacedTile[];
+  /** Posición en `board` de la ficha de salida. */
+  boardOrigin: number;
   boneyardCount: number;
   scores: number[];
   targetScore: number;

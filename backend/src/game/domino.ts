@@ -82,6 +82,8 @@ export interface GameState {
   mode: Mode;
   players: GamePlayer[];
   board: PlacedTile[];
+  /** Posición en `board` de la ficha con la que se abrió la mano (crece por la izquierda). */
+  boardOrigin: number;
   boneyard: Tile[];
   /** Fichas que no se reparten ni se pueden robar (con 4 jugadores). */
   sleeping: Tile[];
@@ -185,6 +187,7 @@ export function createGame(
     mode,
     players: players.map((p) => ({ id: p.id, name: p.name, hand: [] })),
     board: [],
+    boardOrigin: 0,
     boneyard: [],
     sleeping: [],
     turn: -1,
@@ -244,6 +247,7 @@ export function dealRound(state: GameState, rng: Rng = Math.random): void {
   state.boneyard = state.mode === 'teams' ? [] : deck;
   state.sleeping = state.mode === 'teams' ? deck : [];
   state.board = [];
+  state.boardOrigin = 0;
   state.consecutivePasses = 0;
   state.round += 1;
   state.log = [];
@@ -318,6 +322,7 @@ export function playTile(state: GameState, playerIndex: number, tileIndex: numbe
     state.board.push({ a: tile[0], b: tile[1] });
   } else if (side === 'left') {
     // La cara que coincide con el extremo izquierdo queda a la derecha de la ficha.
+    state.boardOrigin += 1;
     state.board.unshift(tile[1] === ends.left ? { a: tile[0], b: tile[1] } : { a: tile[1], b: tile[0] });
   } else {
     state.board.push(tile[0] === ends.right ? { a: tile[0], b: tile[1] } : { a: tile[1], b: tile[0] });

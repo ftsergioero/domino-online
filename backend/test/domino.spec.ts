@@ -52,6 +52,8 @@ function playRound(g: GameState, rng: () => number) {
     }
     // La cadena de la mesa siempre debe encajar.
     for (let i = 1; i < g.board.length; i++) expect(g.board[i - 1].b).toBe(g.board[i].a);
+    // La ficha de salida sigue localizada aunque se juegue por la izquierda.
+    if (g.board.length) expect(g.boardOrigin).toBe(g.log.filter((l) => l.action === 'play' && l.side === 'left').length - (g.log.find((l) => l.action === 'play')?.side === 'left' ? 1 : 0));
     expect(tilesInPlay(g)).toHaveLength(55);
   }
 }

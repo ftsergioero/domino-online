@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { GameView, RoomView, Side } from '@/lib/types';
 import { Domino, TileBack } from './Domino';
 import { Hand } from './Hand';
+import { Board } from './Board';
 
 const POSITIONS: Record<number, string[]> = {
   2: ['bottom', 'top'],
@@ -166,28 +167,19 @@ export function Table({
               ) : null}
             </div>
           ) : (
-            <div className="board">
-              {selMove?.sides.includes('left') && (
-                <button className="end-btn" onClick={() => onPlay(selected!, 'left')}>
-                  ◀ Aquí
-                </button>
-              )}
-              {g.board.map((t, i) => (
-                <Domino
-                  key={`${i}-${t.a}-${t.b}-${g.board.length}`}
-                  a={t.a}
-                  b={t.b}
-                  horizontal={t.a !== t.b}
-                  size="sm"
-                  state={i === newestIndex ? 'new' : undefined}
-                />
-              ))}
-              {selMove?.sides.includes('right') && (
-                <button className="end-btn" onClick={() => onPlay(selected!, 'right')}>
-                  Aquí ▶
-                </button>
-              )}
-            </div>
+            <Board
+              board={g.board}
+              origin={g.boardOrigin}
+              newestIndex={newestIndex}
+              targets={
+                selMove
+                  ? {
+                      left: selMove.sides.includes('left') ? () => onPlay(selected!, 'left') : undefined,
+                      right: selMove.sides.includes('right') ? () => onPlay(selected!, 'right') : undefined,
+                    }
+                  : undefined
+              }
+            />
           )}
           {g.mode === 'individual' && <div className="boneyard">Pozo: {g.boneyardCount} fichas</div>}
         </div>
@@ -207,11 +199,11 @@ export function Table({
               ) : selMove && ends ? (
                 <div className="side-pick">
                   <button className="btn primary big" onClick={() => onPlay(selected!, 'left')}>
-                    ◀ Al {ends.left}
+                    Al {ends.left}
                   </button>
                   <span className="muted-light">¿Dónde?</span>
                   <button className="btn primary big" onClick={() => onPlay(selected!, 'right')}>
-                    Al {ends.right} ▶
+                    Al {ends.right}
                   </button>
                 </div>
               ) : (

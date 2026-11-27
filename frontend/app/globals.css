@@ -1530,3 +1530,30 @@ body:has(.hand-ghost) {
     font-size: 1.6rem;
   }
 }
+
+/* ---------- tablero en serpiente desde el centro ---------- */
+.snake {
+  position: relative;
+  width: 100%;
+  flex: none;
+}
+.snake-tile {
+  position: absolute;
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+}
+.snake .domino.sm {
+  --s: var(--snake-s);
+}
+button.snake-tile {
+  cursor: pointer;
+  border-radius: 6px;
+  animation: pulse 1s infinite alternate;
+  z-index: 1;
+}
+button.snake-tile .domino {
+  box-shadow: 0 0 0 3px var(--accent), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
